@@ -22,8 +22,8 @@ const AgentView = () => {
   });
   
   const [deliveryQueue] = useState([
-    { id: "DEL-002", customer: "Sarah Johnson", address: "456 Oak Ave", eta: "35 mins" },
-    { id: "DEL-003", customer: "Mike Davis", address: "789 Pine Blvd", eta: "50 mins" },
+    { id: "DEL-002", customer: "Sarah Johnson", address: "456 Oak Ave", status: "pending", eta: "35 mins" },
+    { id: "DEL-003", customer: "Mike Davis", address: "789 Pine Blvd", status: "pending", eta: "50 mins" },
   ]);
 
   const [showAssistant, setShowAssistant] = useState(false);
