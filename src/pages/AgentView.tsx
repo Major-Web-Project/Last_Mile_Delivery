@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,12 +17,24 @@ const AgentView = () => {
     address: "123 Main St, Downtown",
     status: "in_transit",
     eta: "15 mins",
-    phone: "+1 555-0123"
+    phone: "+1 555-0123",
   });
-  
+
   const [deliveryQueue] = useState([
-    { id: "DEL-002", customer: "Sarah Johnson", address: "456 Oak Ave", status: "pending", eta: "35 mins" },
-    { id: "DEL-003", customer: "Mike Davis", address: "789 Pine Blvd", status: "pending", eta: "50 mins" },
+    {
+      id: "DEL-002",
+      customer: "Sarah Johnson",
+      address: "456 Oak Ave",
+      status: "pending",
+      eta: "35 mins",
+    },
+    {
+      id: "DEL-003",
+      customer: "Mike Davis",
+      address: "789 Pine Blvd",
+      status: "pending",
+      eta: "50 mins",
+    },
   ]);
 
   const [showAssistant, setShowAssistant] = useState(false);
@@ -35,7 +46,7 @@ const AgentView = () => {
     });
     setCurrentDelivery({
       ...currentDelivery,
-      status: "completed"
+      status: "completed",
     });
   };
 
@@ -50,17 +61,24 @@ const AgentView = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate('/')}>
+              <Button variant="ghost" onClick={() => navigate("/")}>
                 ← Home
               </Button>
-              <h1 className="text-2xl font-bold text-slate-800">Agent Dashboard</h1>
+              <h1 className="text-2xl font-bold text-slate-800">
+                Agent Dashboard
+              </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-800"
+              >
                 <Navigation className="w-4 h-4 mr-1" />
                 Active Route
               </Badge>
-              <div className="text-sm text-slate-600">Agent: Alex Rodriguez</div>
+              <div className="text-sm text-slate-600">
+                Agent: Alex Rodriguez
+              </div>
             </div>
           </div>
         </div>
@@ -80,31 +98,54 @@ const AgentView = () => {
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <div className="font-semibold">{currentDelivery.customer}</div>
-                    <div className="text-sm text-slate-600">{currentDelivery.address}</div>
-                    <div className="text-sm text-slate-600">{currentDelivery.phone}</div>
+                    <div className="font-semibold">
+                      {currentDelivery.customer}
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      {currentDelivery.address}
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      {currentDelivery.phone}
+                    </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
-                    <Badge 
-                      variant={currentDelivery.status === 'completed' ? 'default' : 'secondary'}
-                      className={currentDelivery.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}
+                    <Badge
+                      variant={
+                        currentDelivery.status === "completed"
+                          ? "default"
+                          : "secondary"
+                      }
+                      className={
+                        currentDelivery.status === "completed"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-orange-100 text-orange-800"
+                      }
                     >
-                      {currentDelivery.status === 'completed' ? 'Completed' : 'In Transit'}
+                      {currentDelivery.status === "completed"
+                        ? "Completed"
+                        : "In Transit"}
                     </Badge>
                     <div className="flex items-center text-sm text-slate-600">
                       <Clock className="w-4 h-4 mr-1" />
                       ETA: {currentDelivery.eta}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    {currentDelivery.status !== 'completed' ? (
+                    {currentDelivery.status !== "completed" ? (
                       <>
-                        <Button onClick={handleDeliveryComplete} className="w-full bg-green-600 hover:bg-green-700">
+                        <Button
+                          onClick={handleDeliveryComplete}
+                          className="w-full bg-green-600 hover:bg-green-700"
+                        >
                           Mark as Delivered
                         </Button>
-                        <Button variant="outline" onClick={handleReportIssue} className="w-full">
+                        <Button
+                          variant="outline"
+                          onClick={handleReportIssue}
+                          className="w-full"
+                        >
                           Report Issue
                         </Button>
                       </>
@@ -128,8 +169,12 @@ const AgentView = () => {
                   {deliveryQueue.map((delivery) => (
                     <div key={delivery.id} className="border rounded-lg p-3">
                       <div className="font-medium">{delivery.customer}</div>
-                      <div className="text-sm text-slate-600">{delivery.address}</div>
-                      <div className="text-xs text-slate-500 mt-1">ETA: {delivery.eta}</div>
+                      <div className="text-sm text-slate-600">
+                        {delivery.address}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        ETA: {delivery.eta}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -144,9 +189,9 @@ const AgentView = () => {
                 <CardTitle>Live Route Map</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <DeliveryMap 
+                <DeliveryMap
                   deliveries={[currentDelivery, ...deliveryQueue]}
-                  currentLocation={{ lat: 40.7128, lng: -74.0060 }}
+                  currentLocation={{ lat: 40.7128, lng: -74.006 }}
                   showRoute={true}
                 />
               </CardContent>
@@ -157,10 +202,7 @@ const AgentView = () => {
 
       {/* AI Assistant */}
       {showAssistant && (
-        <AIAssistant 
-          onClose={() => setShowAssistant(false)}
-          context="agent"
-        />
+        <AIAssistant onClose={() => setShowAssistant(false)} context="agent" />
       )}
     </div>
   );

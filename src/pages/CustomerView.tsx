@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ const CustomerView = () => {
   const navigate = useNavigate();
   const [trackingId, setTrackingId] = useState("DEL-001");
   const [showAssistant, setShowAssistant] = useState(false);
-  
+
   const [deliveryInfo] = useState({
     id: "DEL-001",
     status: "in_transit",
@@ -25,26 +24,34 @@ const CustomerView = () => {
     orderItems: [
       "Premium Coffee Beans (2 lbs)",
       "Organic Honey (16 oz)",
-      "Artisan Bread"
+      "Artisan Bread",
     ],
-    currentLocation: { lat: 40.7589, lng: -73.9851 }
+    currentLocation: { lat: 40.7589, lng: -73.9851 },
   });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'in_transit': return 'bg-blue-100 text-blue-800';
-      case 'out_for_delivery': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "delivered":
+        return "bg-green-100 text-green-800";
+      case "in_transit":
+        return "bg-blue-100 text-blue-800";
+      case "out_for_delivery":
+        return "bg-orange-100 text-orange-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'delivered': return 'Delivered';
-      case 'in_transit': return 'In Transit';
-      case 'out_for_delivery': return 'Out for Delivery';
-      default: return 'Unknown';
+      case "delivered":
+        return "Delivered";
+      case "in_transit":
+        return "In Transit";
+      case "out_for_delivery":
+        return "Out for Delivery";
+      default:
+        return "Unknown";
     }
   };
 
@@ -55,10 +62,12 @@ const CustomerView = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate('/')}>
+              <Button variant="ghost" onClick={() => navigate("/")}>
                 ← Home
               </Button>
-              <h1 className="text-2xl font-bold text-slate-800">Track Your Delivery</h1>
+              <h1 className="text-2xl font-bold text-slate-800">
+                Track Your Delivery
+              </h1>
             </div>
           </div>
         </div>
@@ -96,16 +105,22 @@ const CustomerView = () => {
               <CardContent>
                 <div className="space-y-4">
                   <div className="text-center">
-                    <Badge className={`${getStatusColor(deliveryInfo.status)} px-3 py-1 text-sm`}>
+                    <Badge
+                      className={`${getStatusColor(
+                        deliveryInfo.status
+                      )} px-3 py-1 text-sm`}
+                    >
                       {getStatusText(deliveryInfo.status)}
                     </Badge>
                   </div>
-                  
+
                   <div>
-                    <div className="text-sm text-slate-600 mb-1">Delivery Address</div>
+                    <div className="text-sm text-slate-600 mb-1">
+                      Delivery Address
+                    </div>
                     <div className="font-medium">{deliveryInfo.address}</div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center text-sm">
                       <Clock className="w-4 h-4 mr-1 text-blue-600" />
@@ -128,10 +143,12 @@ const CustomerView = () => {
                 <div className="space-y-3">
                   <div>
                     <div className="font-medium">{deliveryInfo.agentName}</div>
-                    <div className="text-sm text-slate-600">{deliveryInfo.agentPhone}</div>
+                    <div className="text-sm text-slate-600">
+                      {deliveryInfo.agentPhone}
+                    </div>
                   </div>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setShowAssistant(true)}
                     className="w-full"
                   >
@@ -150,7 +167,10 @@ const CustomerView = () => {
               <CardContent>
                 <div className="space-y-2">
                   {deliveryInfo.orderItems.map((item, index) => (
-                    <div key={index} className="text-sm border-b pb-2 last:border-b-0">
+                    <div
+                      key={index}
+                      className="text-sm border-b pb-2 last:border-b-0"
+                    >
                       {item}
                     </div>
                   ))}
@@ -166,14 +186,16 @@ const CustomerView = () => {
                 <CardTitle>Live Tracking</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <DeliveryMap 
-                  deliveries={[{
-                    id: deliveryInfo.id,
-                    customer: deliveryInfo.customerName,
-                    address: deliveryInfo.address,
-                    status: deliveryInfo.status,
-                    eta: deliveryInfo.estimatedTime
-                  }]}
+                <DeliveryMap
+                  deliveries={[
+                    {
+                      id: deliveryInfo.id,
+                      customer: deliveryInfo.customerName,
+                      address: deliveryInfo.address,
+                      status: deliveryInfo.status,
+                      eta: deliveryInfo.estimatedTime,
+                    },
+                  ]}
                   currentLocation={deliveryInfo.currentLocation}
                   customerView={true}
                 />
@@ -185,7 +207,7 @@ const CustomerView = () => {
 
       {/* AI Assistant */}
       {showAssistant && (
-        <AIAssistant 
+        <AIAssistant
           onClose={() => setShowAssistant(false)}
           context="customer"
         />
