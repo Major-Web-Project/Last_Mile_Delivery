@@ -1,14 +1,11 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Navigation, User, MapPin, Clock, MessageCircle, AlertTriangle } from "lucide-react";
+import { Navigation, MapPin, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import DeliveryMap from "@/components/DeliveryMap";
-import AIAssistant from "@/components/AIAssistant";
+import MapboxMap from "@/components/MapboxMap";
 import { useToast } from "@/hooks/use-toast";
-import { LocationService } from "@/services/LocationService";
 
 const AgentView = () => {
   const navigate = useNavigate();
@@ -27,27 +24,6 @@ const AgentView = () => {
     { id: "DEL-003", customer: "Mike Davis", address: "789 Pine Blvd", status: "pending", eta: "50 mins" },
   ]);
 
-  const [showAssistant, setShowAssistant] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState({ lat: 40.7128, lng: -74.0060 });
-  const [sosActive, setSosActive] = useState(false);
-
-  // Get current location
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCurrentLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.log("Location access denied:", error);
-        }
-      );
-    }
-  }, []);
-
   const handleDeliveryComplete = () => {
     toast({
       title: "Delivery Completed!",
@@ -60,51 +36,10 @@ const AgentView = () => {
   };
 
   const handleReportIssue = () => {
-    setShowAssistant(true);
-  };
-
-  const handleSOS = () => {
-    setSosActive(true);
-    
-    // Get current location and send SOS
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const location = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            timestamp: new Date().toISOString(),
-            agentId: "alex-rodriguez",
-            agentName: "Alex Rodriguez"
-          };
-          
-          // Send SOS to location service
-          LocationService.sendSOS(location);
-          
-          toast({
-            title: "🚨 SOS Alert Sent!",
-            description: "Emergency alert with live location sent to dispatch and customer",
-            variant: "destructive"
-          });
-          
-          // Auto-disable SOS after 30 seconds
-          setTimeout(() => {
-            setSosActive(false);
-            toast({
-              title: "SOS Alert Ended",
-              description: "Emergency mode deactivated",
-            });
-          }, 30000);
-        },
-        (error) => {
-          toast({
-            title: "Location Error",
-            description: "Unable to get current location for SOS",
-            variant: "destructive"
-          });
-        }
-      );
-    }
+    toast({
+      title: "Issue Reported",
+      description: "Your report has been sent to dispatch",
+    });
   };
 
   return (
@@ -134,28 +69,6 @@ const AgentView = () => {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Current Delivery */}
           <div className="lg:col-span-1">
-            {/* SOS Button */}
-            <Card className="mb-6 border-red-200">
-              <CardContent className="p-4">
-                <Button 
-                  onClick={handleSOS}
-                  disabled={sosActive}
-                  className={`w-full h-16 text-lg font-bold ${sosActive 
-                    ? 'bg-red-600 animate-pulse' 
-                    : 'bg-red-500 hover:bg-red-600'
-                  }`}
-                >
-                  <AlertTriangle className="w-6 h-6 mr-2" />
-                  {sosActive ? 'SOS ACTIVE' : 'EMERGENCY SOS'}
-                </Button>
-                {sosActive && (
-                  <div className="text-center text-sm text-red-600 mt-2 font-medium">
-                    🚨 Emergency mode active - Location being shared
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -229,26 +142,13 @@ const AgentView = () => {
               <CardHeader>
                 <CardTitle>Live Route Map</CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                <DeliveryMap 
-                  deliveries={[currentDelivery, ...deliveryQueue]}
-                  currentLocation={currentLocation}
-                  showRoute={true}
-                  sosActive={sosActive}
-                />
+              <CardContent className="p-0 h-[540px]">
+                <MapboxMap />
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
-
-      {/* AI Assistant */}
-      {showAssistant && (
-        <AIAssistant 
-          onClose={() => setShowAssistant(false)}
-          context="agent"
-        />
-      )}
     </div>
   );
 };
