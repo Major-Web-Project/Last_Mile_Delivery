@@ -3,6 +3,7 @@ dotenv.config();
 
 import Order from "../models/order.js";
 import { Client } from "@googlemaps/google-maps-services-js";
+import stock from "../stock/data.js";
 
 const googleMapsClient = new Client({});
 const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
@@ -52,10 +53,21 @@ export const addOrder = async (req, res) => {
 
 export const getOrder = async (req, res) => {
   try {
-    const orders = await Order.find({});
+    const orders = await Order.find({}).populate("geometry");
+    console.log(orders);
     res.status(200).json(orders);
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ message: "Failed to retrieve orders" });
+  }
+};
+
+export const addStockData = async (req, res) => {
+  try {
+    await Order.insertMany(stock);
+    res.status(200).json({ message: "Stock data added successfully" });
+  } catch (error) {
+    console.error("Error adding stock data:", error);
+    res.status(500).json({ message: "Failed to add stock data" });
   }
 };

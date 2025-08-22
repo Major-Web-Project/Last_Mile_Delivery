@@ -9,7 +9,7 @@ import mongoose from "mongoose";
 dotenv.config();
 
 const app = express();
-const allowedOrigins = ["http://localhost:8081", "http://localhost:8000"];
+const allowedOrigins = ["http://localhost:8081", "http://localhost:8080"];
 
 app.use(
   cors({

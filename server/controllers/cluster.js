@@ -38,6 +38,7 @@ export const predictClustersFromOrders = async (req, res) => {
     const maxPoints = Number(req.query.max) || 10;
 
     const orders = await Order.find({});
+    console.log("Fetched orders:", orders);
     const coords = orders
       .map((o) =>
         Array.isArray(o.geometry?.coordinates) ? o.geometry.coordinates : null
@@ -58,7 +59,13 @@ export const predictClustersFromOrders = async (req, res) => {
       coordinates: coords,
       max_points_per_cluster: maxPoints,
     });
-    res.json(response.data);
+    const rawResponse = response.data;
+
+    const clusters = rawResponse.clusters.map((cluster) =>
+      cluster.coordinates.map((point) => [point.lon, point.lat])
+    );
+
+    res.json(clusters);
   } catch (error) {
     res
       .status(500)

@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import MapboxMap from "@/components/MapboxMap";
 import { useToast } from "@/hooks/use-toast";
 import useOrderStore from "@/store/addressStore";
+import axios from "axios";
 
 const AgentView = () => {
   const navigate = useNavigate();
@@ -14,6 +15,24 @@ const AgentView = () => {
   const [idx, setIdx] = useState(0);
   const { orders, getOrders, addOrderCallback, removeOrderCallback } =
     useOrderStore();
+  const [clusters, setClusters] = useState([]);
+
+  useEffect(() => {
+    const fetchClusters = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/clusters/predict-from-orders"
+        ); // adjust BASE_URL if needed
+        const data = res.data;
+        setClusters(data);
+        console.log("Frontend:", data);
+      } catch (err) {
+        console.error("Failed to fetch clusters", err);
+      }
+    };
+
+    fetchClusters();
+  }, []); // runs once when component mounts
 
   // Refresh orders only when component mounts
   useEffect(() => {
@@ -36,24 +55,6 @@ const AgentView = () => {
     };
   }, [addOrderCallback, removeOrderCallback, getOrders]);
 
-  const clusters = [
-    [
-      [73.21668395742037, 22.25700591168219],
-      [73.22562220838351, 22.248142453217334],
-      [73.20194447796348, 22.260439181776405],
-      [73.19869806249785, 22.26167630895328],
-      [73.21405559048209, 22.258611479463713],
-      [73.18431705853321, 22.28310051174754],
-    ],
-    [
-      [73.18376626452225, 22.315395087947294],
-      [73.18315378149572, 22.31530867600918],
-      [73.18559924281323, 22.31754583779496],
-      [73.17524797923102, 22.315922406937243],
-      [73.18431705853321, 22.28310051174754],
-    ],
-  ];
-
   const incIdx = () => {
     console.log("Inc Clicked");
     setIdx((prevIdx) => (prevIdx + 1) % clusters.length);
@@ -64,31 +65,49 @@ const AgentView = () => {
     setIdx((prevIdx) => (prevIdx - 1 + clusters.length) % clusters.length);
   };
 
-  const [currentDelivery, setCurrentDelivery] = useState({
-    id: "DEL-001",
-    customer: "John Smith",
-    address: "123 Main St, Downtown",
-    status: "in_transit",
-    eta: "15 mins",
-    phone: "+1 555-0123",
-  });
+  const [currentDelivery, setCurrentDelivery] = useState(null);
+  const [deliveryQueue, setDeliveryQueue] = useState([]);
 
-  const [deliveryQueue] = useState([
-    {
-      id: "DEL-002",
-      customer: "Sarah Johnson",
-      address: "456 Oak Ave",
-      status: "pending",
-      eta: "35 mins",
-    },
-    {
-      id: "DEL-003",
-      customer: "Mike Davis",
-      address: "789 Pine Blvd",
-      status: "pending",
-      eta: "50 mins",
-    },
-  ]);
+  // Helper function to compare coordinates (with some tolerance for floating point)
+  const coordsEqual = (a, b, tol = 1e-6) =>
+    Math.abs(a[0] - b[0]) < tol && Math.abs(a[1] - b[1]) < tol;
+
+  useEffect(() => {
+    if (!orders || !clusters[idx]) return;
+
+    // For each coordinate in the current cluster, find the matching order
+    const matchedOrders = clusters[idx]
+      .map((clusterCoord) =>
+        orders.find((order) =>
+          coordsEqual(order.geometry.coordinates, clusterCoord)
+        )
+      )
+      .filter(Boolean); // Remove any unmatched
+
+    // Set currentDelivery as the first in the cluster, rest as queue
+    if (matchedOrders.length > 0) {
+      setCurrentDelivery({
+        id: matchedOrders[0]._id,
+        address: matchedOrders[0].address,
+        customer: "N/A",
+        status: "pending",
+        eta: "",
+        phone: "",
+      });
+      setDeliveryQueue(
+        matchedOrders.slice(1).map((order) => ({
+          id: order._id,
+          address: order.address,
+          customer: "N/A",
+          status: "pending",
+          eta: "",
+        }))
+      );
+    } else {
+      setCurrentDelivery(null);
+      setDeliveryQueue([]);
+    }
+  }, [orders, clusters, idx]);
 
   const handleDeliveryComplete = () => {
     toast({
@@ -147,64 +166,70 @@ const AgentView = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="font-semibold">
-                        {currentDelivery.customer}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {currentDelivery.address}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {currentDelivery.phone}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Badge
-                        variant={
-                          currentDelivery.status === "completed"
-                            ? "default"
-                            : "secondary"
-                        }
-                        className={
-                          currentDelivery.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-orange-100 text-orange-800"
-                        }
-                      >
-                        {currentDelivery.status === "completed"
-                          ? "Completed"
-                          : "In Transit"}
-                      </Badge>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Clock className="w-4 h-4 mr-1" />
-                        ETA: {currentDelivery.eta}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      {currentDelivery.status !== "completed" ? (
-                        <>
-                          <Button
-                            onClick={handleDeliveryComplete}
-                            className="w-full bg-green-500 hover:bg-green-800"
-                          >
-                            Mark as Delivered
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={handleReportIssue}
-                            className="w-full"
-                          >
-                            Report Issue
-                          </Button>
-                        </>
-                      ) : (
-                        <div className="text-center py-4 text-green-500 font-semibold">
-                          ✓ Delivery Completed
+                  {currentDelivery ? (
+                    <div className="space-y-4">
+                      <div>
+                        <div className="font-semibold">
+                          {currentDelivery.customer}
                         </div>
-                      )}
+                        <div className="text-sm text-muted-foreground">
+                          {currentDelivery.address}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {currentDelivery.phone}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Badge
+                          variant={
+                            currentDelivery.status === "completed"
+                              ? "default"
+                              : "secondary"
+                          }
+                          className={
+                            currentDelivery.status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-orange-100 text-orange-800"
+                          }
+                        >
+                          {currentDelivery.status === "completed"
+                            ? "Completed"
+                            : "In Transit"}
+                        </Badge>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Clock className="w-4 h-4 mr-1" />
+                          ETA: {currentDelivery.eta}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {currentDelivery.status !== "completed" ? (
+                          <>
+                            <Button
+                              onClick={handleDeliveryComplete}
+                              className="w-full bg-green-500 hover:bg-green-800"
+                            >
+                              Mark as Delivered
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={handleReportIssue}
+                              className="w-full"
+                            >
+                              Report Issue
+                            </Button>
+                          </>
+                        ) : (
+                          <div className="text-center py-4 text-green-500 font-semibold">
+                            ✓ Delivery Completed
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="text-center text-gray-400">
+                      No delivery selected
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               {/* Delivery Queue */}

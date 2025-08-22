@@ -2,50 +2,41 @@ import { useRef, useEffect, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./MapboxMap.css";
-import orderStore from "@/store/addressStore";
 
 const INITIAL_CENTER = [73.18431705853321, 22.28310051174754]; // Start Point
 const INITIAL_ZOOM = 13;
 const ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_API;
 
-const clusters = [
-  [
-    [73.21668395742037, 22.25700591168219],
-    [73.22562220838351, 22.248142453217334],
-    [73.20194447796348, 22.260439181776405],
-    [73.19869806249785, 22.26167630895328],
-    [73.21405559048209, 22.258611479463713],
-    [73.18431705853321, 22.28310051174754],
-  ],
-  [
-    [73.18376626452225, 22.315395087947294],
-    [73.18315378149572, 22.31530867600918],
-    [73.18559924281323, 22.31754583779496],
-    [73.17524797923102, 22.315922406937243],
-    [73.18431705853321, 22.28310051174754],
-  ],
-];
-
 function DefaultView() {
-  const [fixedWaypoints, setFixedWaypoints] = useState(clusters[0]);
-  let n = clusters.length;
-
-  const mapRef = useRef();
-  const mapContainerRef = useRef();
+  const [clusters, setClusters] = useState([]);
+  const [fixedWaypoints, setFixedWaypoints] = useState([]);
   const [steps, setSteps] = useState([]);
   const [duration, setDuration] = useState(0);
+  const mapRef = useRef();
+  const mapContainerRef = useRef();
   const directionMarkerRef = useRef(null);
-  const { orders } = orderStore();
 
+  // Fetch clusters from backend API on mount
   useEffect(() => {
-    if (!orders || orders.length === 0) return;
-    console.log(orders);
-
-    // Extract coordinates from orders
-    const extractedCoords = orders.map((order) => order.geometry.coordinates);
-
-    setFixedWaypoints([...extractedCoords, ...clusters[0]]);
-  }, [orders]);
+    const fetchClusters = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:5000/api/clusters/predict-from-orders"
+        );
+        const data = await res.json();
+        setClusters(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setFixedWaypoints(data[0]);
+        } else {
+          setFixedWaypoints([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch clusters", err);
+        setFixedWaypoints([]);
+      }
+    };
+    fetchClusters();
+  }, []);
 
   useEffect(() => {
     if (!fixedWaypoints || fixedWaypoints.length === 0) return;
@@ -124,7 +115,7 @@ function DefaultView() {
     });
 
     return () => map.remove();
-  }, [fixedWaypoints, orders]);
+  }, [fixedWaypoints]);
 
   return (
     <div className="relative w-full h-svh">

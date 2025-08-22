@@ -9,7 +9,7 @@ const INITIAL_ZOOM = 13;
 const ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_API;
 
 function MapboxMap({ clusters, idx }) {
-  const [fixedWaypoints, setFixedWaypoints] = useState(clusters[idx]);
+  const [fixedWaypoints, setFixedWaypoints] = useState([[]]);
   let n = clusters.length;
 
   const mapRef = useRef();
@@ -20,20 +20,12 @@ function MapboxMap({ clusters, idx }) {
   const { orders } = orderStore();
 
   useEffect(() => {
-    if (!orders || orders.length === 0) {
-      console.log("No orders available");
+    if (!clusters[idx] || clusters[idx].length === 0) {
+      setFixedWaypoints([]);
       return;
     }
-    console.log("Orders updated:", orders);
-
-    // Extract coordinates from orders
-    const extractedCoords = orders.map((order) => order.geometry.coordinates);
-    console.log("Extracted coordinates:", extractedCoords);
-
-    const newWaypoints = [...extractedCoords, ...clusters[idx]];
-    console.log("Setting new waypoints:", newWaypoints);
-    setFixedWaypoints(newWaypoints);
-  }, [orders, clusters, idx]);
+    setFixedWaypoints(clusters[idx]);
+  }, [clusters, idx]);
 
   useEffect(() => {
     if (!fixedWaypoints || fixedWaypoints.length === 0) return;
