@@ -37,17 +37,15 @@
 }
 
 #instructions {
-  position: absolute;
-  margin: 20px;
-  
-  width: 15%;
-  top: 25%;
-  bottom: 20%;
-  padding: 20px;
-  color: black;
   background-color: #fff;
-  overflow-y: scroll;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 20px;
+  color: #222;
   font-family: sans-serif;
+  max-width: 400px;
+  margin-bottom: 20px;
+  transition: opacity 0.3s;
 }
 
 .direction-marker {

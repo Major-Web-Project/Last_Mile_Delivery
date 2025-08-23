@@ -131,10 +131,10 @@ const AgentView = () => {
     >
       <div className="min-h-screen bg-yellow-100/50 backdrop-blur-sm text-foreground">
         {/* Header */}
-        <div className=" border-b border-border shadow-sm ">
+        <div className=" border-b border-border shadow-sm bg-black/30">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 text-white">
                 <Button variant="ghost" onClick={() => navigate("/")}>
                   ← Home
                 </Button>

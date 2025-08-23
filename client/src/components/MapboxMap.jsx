@@ -188,14 +188,11 @@ function MapboxMap({ clusters, idx }) {
   return (
     <>
       <div id="map-container" ref={mapContainerRef} />
-
-      <div id="instructions">
+      <div id="instructions" className="h-64 overflow-y-auto z-10 backdrop-blur-sm bg-white/30 p-4 rounded shadow-lg m-4">
         <p id="prompt">🗺 Route from Start → Waypoints (fixed order)</p>
         {steps.length > 0 && (
           <>
-            <p>
-              <strong>Trip duration: {Math.floor(duration / 60)} min 🚗</strong>
-            </p>
+            <p><strong>Trip Duration: {Math.floor(duration / 60)} min 🚗</strong></p>
             <ol>
               {steps.map((instruction, index) => (
                 <li key={index}>{instruction}</li>
@@ -204,6 +201,7 @@ function MapboxMap({ clusters, idx }) {
           </>
         )}
       </div>
+
     </>
   );
 }

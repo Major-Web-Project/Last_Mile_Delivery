@@ -6,6 +6,7 @@ from services.geoclustering import app as fastapi_app
 app = fastapi_app
 """
 
+from urllib import request
 from flask import Flask, jsonify
 import json
 import os

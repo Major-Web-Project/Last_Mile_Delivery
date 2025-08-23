@@ -14,53 +14,71 @@ import { useEffect, useState } from "react";
 import useOrderStore from "../store/addressStore";
 import { Typewriter } from "react-simple-typewriter";
 import { useToast } from "@/hooks/use-toast";
+import ClusterViewer from "@/components/ClusterViewer";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [newAddress, setNewAddress] = useState("");
-  const { orders, getOrders, addOrders } = useOrderStore();
+
+  const [streetNumber, setStreetNumber] = useState("");
+  const [streetName, setStreetName] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [country, setCountry] = useState("");  const { orders, getOrders, addOrders } = useOrderStore();
   const { toast } = useToast();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("Form submitted with address:", newAddress);
+  e.preventDefault();
 
-    if (!newAddress.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid address",
-        variant: "destructive",
-      });
-      return;
-    }
+  // Construct full address
+  const fullAddress = `${streetNumber} ${streetName}, ${city}, ${state}, ${postalCode}, ${country}`.trim();
 
-    try {
-      console.log("Calling addOrders...");
-      const result = await addOrders(newAddress);
-      console.log("addOrders result:", result);
+  console.log("Form submitted with address:", fullAddress);
 
-      // The addOrders function now automatically refreshes orders and notifies callbacks
-      toast({
-        title: "Success!",
-        description: `Address added successfully! Geocoded as: ${
-          result.geocodedAddress || "Location identified"
-        }`,
-      });
-      console.log("Submitted Address:", newAddress);
-      setNewAddress("");
-    } catch (error) {
-      console.error("Error in handleSubmit:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add address. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+  // Basic validation
+  if (!streetNumber || !streetName || !city || !state || !postalCode || !country) {
+    toast({
+      title: "Error",
+      description: "Please fill in all address fields",
+      variant: "destructive",
+    });
+    return;
+  }
 
+  try {
+    console.log("Calling addOrders...");
+    const result = await addOrders(fullAddress);
+    console.log("addOrders result:", result);
+
+    toast({
+      title: "Success!",
+      description: `Address added successfully! Geocoded as: ${
+        result.geocodedAddress || "Location identified"
+      }`,
+    });
+
+    console.log("Submitted Address:", fullAddress);
+
+    // Reset form fields
+    setStreetNumber("");
+    setStreetName("");
+    setCity("");
+    setState("");
+    setPostalCode("");
+    setCountry("");
+  } catch (error) {
+    console.error("Error in handleSubmit:", error);
+    toast({
+      title: "Error",
+      description: "Failed to add address. Please try again.",
+      variant: "destructive",
+    });
+  }
+};
   useEffect(() => {
     getOrders();
   }, [getOrders]);
+
 
   return (
     <div
@@ -90,31 +108,10 @@ const Index = () => {
                 />
               </h1>
             </div>
-            <h2 className="text-sm font-bold text-black w-fit mx-auto mb-10">
+            <h2 className="text-sm font-bold text-black w-fit mx-auto">
               Advanced last-mile delivery management with AI-powered routing and
               intelligent optimization for seamless logistics operations
             </h2>
-            <form
-              onSubmit={handleSubmit}
-              method="post"
-              className="flex flex-col sm:flex-row justify-center gap-4"
-            >
-              <input
-                onChange={(e) => setNewAddress(e.target.value)}
-                value={newAddress}
-                type="text"
-                name="newAdd"
-                id="newAdd"
-                placeholder="Enter Full Address (e.g., Parul University, Vadodara, Gujarat, India)"
-                className="px-4 py-2 w-full sm:w-[400px] text-black border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="submit"
-                className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800"
-              >
-                Add New Address
-              </button>
-            </form>
           </div>
           <div className="max-w-7xl mx-auto px-4">
             {/* Main Feature Cards */}
@@ -166,7 +163,92 @@ const Index = () => {
                   </Button>
                 </CardContent>
               </Card>
+              
             </div>
+            <div className="flex flex-col sm:flex-row gap-12 mb-10">
+              <div className="flex-1 bg-white/50 p-6 rounded-lg shadow-md overflow-y-auto ml-8">
+                <ClusterViewer />
+              </div>
+
+              <div className="flex-1">
+                {/* Address Form (your existing code remains unchanged) */}
+                <form
+                  onSubmit={handleSubmit}
+                  method="post"
+                  className="flex flex-col gap-4  w-full  sm:w-[500px] bg-white/20 shadow-md p-6 rounded-lg"
+                >
+                  <h1 className="text-3xl font-bold text-center mb-6">Add Your Address</h1>
+                  {/* Street Number */}
+                  <input
+                    type="text"
+                    name="streetNumber"
+                    id="streetNumber"
+                    placeholder="Street Number"
+                    value={streetNumber}
+                    onChange={(e) => setStreetNumber(e.target.value)}
+                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {/* Street Name */}
+                  <input
+                    type="text"
+                    name="streetName"
+                    id="streetName"
+                    placeholder="Street Name"
+                    value={streetName}
+                    onChange={(e) => setStreetName(e.target.value)}
+                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {/* City */}
+                  <input
+                    type="text"
+                    name="city"
+                    id="city"
+                    placeholder="City"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {/* State / Province */}
+                  <input
+                    type="text"
+                    name="state"
+                    id="state"
+                    placeholder="State / Province"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {/* Postal Code */}
+                  <input
+                    type="text"
+                    name="postalCode"
+                    id="postalCode"
+                    placeholder="Postal Code"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {/* Country */}
+                  <input
+                    type="text"
+                    name="country"
+                    id="country"
+                    placeholder="Country"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 transition mt-4"
+                  >
+                    Add New Address
+                  </button>
+                </form>
+              </div>
+            </div>
+
             <div className="grid lg:grid-cols-3 gap-4 mb-10 ">
               {/* Feature Grid */}
               <div className="text-center p-6 bg-purple-50 rounded-lg shadow-sm hover:shadow-lg transition-shadow border border-border">
@@ -209,7 +291,7 @@ const Index = () => {
 
             {/* Stats Section */}
             <div className="rounded-2xl shadow-lg p-8 border border-border bg-transparent">
-              <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div className="grid md:grid-cols-3 gap-8 text-center ">
                 <div className="bg-blue-50 p-6 rounded-xl">
                   <div className="text-4xl font-bold text-blue-600 mb-2">
                     AI-Powered
