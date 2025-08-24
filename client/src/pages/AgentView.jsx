@@ -16,6 +16,7 @@ const AgentView = () => {
   const { orders, getOrders, addOrderCallback, removeOrderCallback } =
     useOrderStore();
   const [clusters, setClusters] = useState([]);
+  const [completedCoords, setCompletedCoords] = useState([]);
 
   useEffect(() => {
     const fetchClusters = async () => {
@@ -72,49 +73,76 @@ const AgentView = () => {
   const coordsEqual = (a, b, tol = 1e-6) =>
     Math.abs(a[0] - b[0]) < tol && Math.abs(a[1] - b[1]) < tol;
 
-  useEffect(() => {
-    if (!orders || !clusters[idx]) return;
+  // Set currentDelivery and deliveryQueue based on optimal order from MapboxMap, filtering out completed deliveries
+  const handleOptimalOrder = (orderedOrders) => {
+    if (orderedOrders && orderedOrders.length > 0) {
+      // Filter out orders whose coordinates are in completedCoords
+      const isCompleted = (coords) =>
+        completedCoords.some(
+          (c) =>
+            Array.isArray(c) &&
+            Array.isArray(coords) &&
+            Math.abs(c[0] - coords[0]) < 1e-6 &&
+            Math.abs(c[1] - coords[1]) < 1e-6
+        );
 
-    // For each coordinate in the current cluster, find the matching order
-    const matchedOrders = clusters[idx]
-      .map((clusterCoord) =>
-        orders.find((order) =>
-          coordsEqual(order.geometry.coordinates, clusterCoord)
-        )
-      )
-      .filter(Boolean); // Remove any unmatched
+      const pendingOrders = orderedOrders.filter(
+        (order) =>
+          order.geometry &&
+          order.geometry.coordinates &&
+          !isCompleted(order.geometry.coordinates)
+      );
 
-    // Set currentDelivery as the first in the cluster, rest as queue
-    if (matchedOrders.length > 0) {
-      setCurrentDelivery({
-        id: matchedOrders[0]._id,
-        address: matchedOrders[0].address,
-        customer: "N/A",
-        status: "pending",
-        eta: "",
-        phone: "",
-      });
-      setDeliveryQueue(
-        matchedOrders.slice(1).map((order) => ({
-          id: order._id,
-          address: order.address,
+      if (pendingOrders.length > 0) {
+        setCurrentDelivery({
+          id: pendingOrders[0]._id,
+          address: pendingOrders[0].address,
           customer: "N/A",
           status: "pending",
           eta: "",
-        }))
-      );
+          phone: "",
+          coordinates:
+            pendingOrders[0].geometry && pendingOrders[0].geometry.coordinates
+              ? pendingOrders[0].geometry.coordinates
+              : [],
+        });
+        setDeliveryQueue(
+          pendingOrders.slice(1).map((order) => ({
+            id: order._id,
+            address: order.address,
+            customer: "N/A",
+            status: "pending",
+            eta: "",
+            coordinates:
+              order.geometry && order.geometry.coordinates
+                ? order.geometry.coordinates
+                : [],
+          }))
+        );
+      } else {
+        setCurrentDelivery(null);
+        setDeliveryQueue([]);
+      }
     } else {
       setCurrentDelivery(null);
       setDeliveryQueue([]);
     }
-  }, [orders, clusters, idx]);
+  };
 
   const handleDeliveryComplete = () => {
-    toast({
-      title: "Delivery Completed!",
-      description: "Package delivered successfully to John Smith",
-    });
-    setCurrentDelivery({ ...currentDelivery, status: "completed" });
+    if (currentDelivery && Array.isArray(currentDelivery.coordinates)) {
+      setCompletedCoords((prev) => [...prev, currentDelivery.coordinates]);
+      if (deliveryQueue.length > 0) {
+        setCurrentDelivery(deliveryQueue[0]);
+        setDeliveryQueue(deliveryQueue.slice(1));
+      } else {
+        setCurrentDelivery(null);
+      }
+      toast({
+        title: "Delivery Completed!",
+        description: "Package delivered successfully.",
+      });
+    }
   };
 
   const handleReportIssue = () => {
@@ -300,6 +328,8 @@ const AgentView = () => {
                     key={`${idx}-${orders.length}`}
                     clusters={clusters}
                     idx={idx}
+                    completedCoords={completedCoords}
+                    onOptimalOrder={handleOptimalOrder}
                   />
                 </CardContent>
               </Card>

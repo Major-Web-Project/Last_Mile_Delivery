@@ -14,12 +14,31 @@ import { useEffect, useState } from "react";
 import useOrderStore from "../store/addressStore";
 import { Typewriter } from "react-simple-typewriter";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 const Index = () => {
   const navigate = useNavigate();
   const [newAddress, setNewAddress] = useState("");
   const { orders, getOrders, addOrders } = useOrderStore();
   const { toast } = useToast();
+  const [clusters, setClusters] = useState([]);
+
+  useEffect(() => {
+    const fetchClusters = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/clusters/predict-from-orders"
+        ); // adjust BASE_URL if needed
+        const data = res.data;
+        setClusters(data);
+        console.log("Frontend:", data);
+      } catch (err) {
+        console.error("Failed to fetch clusters", err);
+      }
+    };
+
+    fetchClusters();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

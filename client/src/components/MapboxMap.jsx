@@ -8,7 +8,7 @@ const INITIAL_CENTER = [73.18431705853321, 22.28310051174754]; // Start Point
 const INITIAL_ZOOM = 13;
 const ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_API;
 
-function MapboxMap({ clusters, idx }) {
+function MapboxMap({ clusters, idx, completedCoords = [], onOptimalOrder }) {
   const [fixedWaypoints, setFixedWaypoints] = useState([[]]);
   let n = clusters.length;
 
@@ -17,6 +17,7 @@ function MapboxMap({ clusters, idx }) {
   const [steps, setSteps] = useState([]);
   const [duration, setDuration] = useState(0);
   const directionMarkerRef = useRef(null);
+  const markersRef = useRef([]); // Store marker instances
   const { orders } = orderStore();
 
   useEffect(() => {
@@ -27,6 +28,7 @@ function MapboxMap({ clusters, idx }) {
     setFixedWaypoints(clusters[idx]);
   }, [clusters, idx]);
 
+  // Only initialize the map once
   useEffect(() => {
     if (!fixedWaypoints || fixedWaypoints.length === 0) return;
 
@@ -55,9 +57,18 @@ function MapboxMap({ clusters, idx }) {
         .addTo(map);
       directionMarkerRef.current = directionMarker;
 
+      // Create and store markers
+      markersRef.current = [];
       fixedWaypoints.forEach((coord) => {
         if (coord[0] !== INITIAL_CENTER[0] || coord[1] !== INITIAL_CENTER[1]) {
-          const marker = new mapboxgl.Marker({ color: "red" })
+          const isCompleted = completedCoords.some(
+            (c) =>
+              Math.abs(c[0] - coord[0]) < 1e-6 &&
+              Math.abs(c[1] - coord[1]) < 1e-6
+          );
+          const marker = new mapboxgl.Marker({
+            color: isCompleted ? "green" : "red",
+          })
             .setLngLat(coord)
             .setPopup(
               new mapboxgl.Popup({ offset: 25 }).setHTML(
@@ -65,6 +76,7 @@ function MapboxMap({ clusters, idx }) {
               )
             )
             .addTo(map);
+          markersRef.current.push({ marker, coord });
         }
       });
 
@@ -131,9 +143,28 @@ function MapboxMap({ clusters, idx }) {
       tsp(1, 0);
       const order = getOptimalPath();
 
-      const orderedCoords = order.map((index) => allCoords[index]);
+      // Exclude the initial center from the optimal path for delivery
+      const orderedCoords = order.slice(1).map((index) => allCoords[index]);
 
-      const routeStr = orderedCoords.map((c) => c.join(",")).join(";");
+      // Map orderedCoords to orders (by matching coordinates)
+      const orderedOrders = orderedCoords
+        .map((coord) =>
+          orders.find(
+            (order) =>
+              Math.abs(order.geometry.coordinates[0] - coord[0]) < 1e-6 &&
+              Math.abs(order.geometry.coordinates[1] - coord[1]) < 1e-6
+          )
+        )
+        .filter(Boolean);
+
+      // Pass the ordered orders to parent (AgentView) if callback provided
+      if (onOptimalOrder) {
+        onOptimalOrder(orderedOrders);
+      }
+
+      const routeStr = [INITIAL_CENTER, ...orderedCoords]
+        .map((c) => c.join(","))
+        .join(";");
       console.log("Requesting directions for route:", routeStr);
 
       const directionsRes = await fetch(
@@ -184,6 +215,23 @@ function MapboxMap({ clusters, idx }) {
 
     return () => map.remove();
   }, [fixedWaypoints, clusters[idx], idx]);
+
+  // Update marker colors when completedCoords changes, without reloading the map
+  useEffect(() => {
+    if (!markersRef.current || markersRef.current.length === 0) return;
+    markersRef.current.forEach(({ marker, coord }) => {
+      const isCompleted = completedCoords.some(
+        (c) =>
+          Array.isArray(c) &&
+          Math.abs(c[0] - coord[0]) < 1e-6 &&
+          Math.abs(c[1] - coord[1]) < 1e-6
+      );
+      // Only update color if needed
+      if (marker.getElement()) {
+        marker.getElement().style.backgroundColor = isCompleted ? "blue" : "";
+      }
+    });
+  }, [completedCoords]);
 
   return (
     <>
