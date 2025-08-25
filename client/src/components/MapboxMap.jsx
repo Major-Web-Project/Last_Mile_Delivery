@@ -3,6 +3,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./MapboxMap.css";
 import orderStore from "@/store/addressStore";
+import Instructions from "./Instructions";
 
 const INITIAL_CENTER = [73.18431705853321, 22.28310051174754]; // Start Point
 const INITIAL_ZOOM = 13;
@@ -187,21 +188,26 @@ function MapboxMap({ clusters, idx }) {
 
   return (
     <>
-      <div id="map-container" ref={mapContainerRef} />
-      <div id="instructions" className="h-64 overflow-y-auto z-10 backdrop-blur-sm bg-white/30 p-4 rounded shadow-lg m-4">
-        <p id="prompt">🗺 Route from Start → Waypoints (fixed order)</p>
-        {steps.length > 0 && (
-          <>
-            <p><strong>Trip Duration: {Math.floor(duration / 60)} min 🚗</strong></p>
-            <ol>
-              {steps.map((instruction, index) => (
-                <li key={index}>{instruction}</li>
-              ))}
-            </ol>
-          </>
-        )}
+     <div id="map-container" ref={mapContainerRef} className="relative h-screen w-full">
+        {/* Instructions overlay */}
+        <Instructions steps={steps} duration={duration} />
+        {/* <div
+          id="instructions"
+          className="absolute top-4 left-4 max-h-64 overflow-y-auto z-10 backdrop-blur-sm bg-white/80 p-4 rounded shadow-lg w-60"
+        >
+          <p id="prompt">🗺 Route from Start → Waypoints (fixed order)</p>
+          {steps.length > 0 && (
+            <>
+              <p>
+                <strong>Trip Duration: {Math.floor(duration / 60)} min 🚗</strong>
+              </p>
+              <ol className="list-decimal list-inside space-y-1">
+                {steps.map((instruction, index) => ( <li key={index}>{instruction}</li> ))}
+              </ol>
+            </>
+          )}
+        </div> */}
       </div>
-
     </>
   );
 }

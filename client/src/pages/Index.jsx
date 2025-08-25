@@ -19,6 +19,8 @@ import ClusterViewer from "@/components/ClusterViewer";
 const Index = () => {
   const navigate = useNavigate();
 
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [streetNumber, setStreetNumber] = useState("");
   const [streetName, setStreetName] = useState("");
   const [city, setCity] = useState("");
@@ -29,14 +31,9 @@ const Index = () => {
 
   const handleSubmit = async (e) => {
   e.preventDefault();
-
-  // Construct full address
-  const fullAddress = `${streetNumber} ${streetName}, ${city}, ${state}, ${postalCode}, ${country}`.trim();
-
-  console.log("Form submitted with address:", fullAddress);
-
+  
   // Basic validation
-  if (!streetNumber || !streetName || !city || !state || !postalCode || !country) {
+  if (!fullName || !phone || !streetNumber || !streetName || !city || !state || !postalCode || !country) {
     toast({
       title: "Error",
       description: "Please fill in all address fields",
@@ -44,10 +41,26 @@ const Index = () => {
     });
     return;
   }
+  if (!/^\+?[0-9]{7,15}$/.test(phone)) {
+    toast({
+      title: "Error",
+      description: "Please enter a valid phone number",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  // Construct full address
+  const fullAddress = `${streetNumber} ${streetName}, ${city}, ${state}, ${postalCode}, ${country}`.trim();
+  const newOrder = {
+    customer : fullName,
+    phone,
+    address: fullAddress,
+  };
 
   try {
     console.log("Calling addOrders...");
-    const result = await addOrders(fullAddress);
+    const result = await addOrders(newOrder);
     console.log("addOrders result:", result);
 
     toast({
@@ -60,6 +73,8 @@ const Index = () => {
     console.log("Submitted Address:", fullAddress);
 
     // Reset form fields
+    setFullName("");
+    setPhone("");
     setStreetNumber("");
     setStreetName("");
     setCity("");
@@ -165,50 +180,86 @@ const Index = () => {
               </Card>
               
             </div>
-            <div className="flex flex-col sm:flex-row gap-12 mb-10">
-              <div className="flex-1 bg-white/50 p-6 rounded-lg shadow-md overflow-y-auto ml-8">
+            <div className="max-w-5xl mx-auto flex flex-col lg:flex-row items-center gap-12 mb-10">
+              <div className="w-full lg:w-1/2 bg-white/50 p-6 rounded-lg shadow-md ml-8 max-h-[500px] overflow-y-auto mr-8">
                 <ClusterViewer />
               </div>
 
-              <div className="flex-1">
-                {/* Address Form (your existing code remains unchanged) */}
+              <div className="w-full lg:w-1/2">
                 <form
                   onSubmit={handleSubmit}
                   method="post"
-                  className="flex flex-col gap-4  w-full  sm:w-[500px] bg-white/20 shadow-md p-6 rounded-lg"
+                  className="flex flex-col gap-4 w-full max-w-md mx-auto max-h-[500px] bg-white/20 shadow-md p-4 sm:p-6 rounded-lg"
                 >
-                  <h1 className="text-3xl font-bold text-center mb-6">Add Your Address</h1>
-                  {/* Street Number */}
+                  <h1 className="text-3xl font-bold text-center mb-4">Add Your Address</h1>
+
+                  {/* Name */}
                   <input
                     type="text"
-                    name="streetNumber"
-                    id="streetNumber"
-                    placeholder="Street Number"
-                    value={streetNumber}
-                    onChange={(e) => setStreetNumber(e.target.value)}
+                    name="fullName"
+                    id="fullName"
+                    placeholder="Full Name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                     className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {/* Street Name */}
+
+                  {/* Phone Number */}
                   <input
-                    type="text"
-                    name="streetName"
-                    id="streetName"
-                    placeholder="Street Name"
-                    value={streetName}
-                    onChange={(e) => setStreetName(e.target.value)}
+                    type="tel"
+                    name="phone"
+                    id="phone"
+                    placeholder="Phone Number"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {/* City */}
-                  <input
-                    type="text"
-                    name="city"
-                    id="city"
-                    placeholder="City"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {/* State / Province */}
+
+                  {/* Street Number + Street Name */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="streetNumber"
+                      id="streetNumber"
+                      placeholder="Street No."
+                      value={streetNumber}
+                      onChange={(e) => setStreetNumber(e.target.value)}
+                      className="px-4 py-2 w-1/3 text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
+                      name="streetName"
+                      id="streetName"
+                      placeholder="Street Name"
+                      value={streetName}
+                      onChange={(e) => setStreetName(e.target.value)}
+                      className="px-4 py-2 flex-1 text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* City + Pincode */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="city"
+                      id="city"
+                      placeholder="City"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="px-4 py-2 flex-1 text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
+                      name="postalCode"
+                      id="postalCode"
+                      placeholder="Pincode"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                      className="px-4 py-2 w-1/3 text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* State */}
                   <input
                     type="text"
                     name="state"
@@ -218,16 +269,7 @@ const Index = () => {
                     onChange={(e) => setState(e.target.value)}
                     className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {/* Postal Code */}
-                  <input
-                    type="text"
-                    name="postalCode"
-                    id="postalCode"
-                    placeholder="Postal Code"
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
-                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+
                   {/* Country */}
                   <input
                     type="text"
@@ -238,15 +280,18 @@ const Index = () => {
                     onChange={(e) => setCountry(e.target.value)}
                     className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 transition mt-4"
+                    className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 transition"
                   >
                     Add New Address
                   </button>
                 </form>
               </div>
+
+
             </div>
 
             <div className="grid lg:grid-cols-3 gap-4 mb-10 ">
