@@ -41,16 +41,22 @@ class PredictionResponse(BaseModel):
     clusters: List[ClusterInfo]
     model_info: Dict[str, Any]
 
+    model_config = {'protected_namespaces': ()}
+
 class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
     timestamp: str
+
+    model_config = {'protected_namespaces': ()}
 
 class ModelInfoResponse(BaseModel):
     success: bool
     model_info: Dict[str, Any]
     cluster_centers: List[List[float]]
     timestamp: str
+
+    model_config = {'protected_namespaces': ()}
 
 class ErrorResponse(BaseModel):
     success: bool = False

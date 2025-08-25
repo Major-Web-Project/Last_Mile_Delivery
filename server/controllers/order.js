@@ -10,13 +10,13 @@ const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
 
 export const addOrder = async (req, res) => {
   try {
-    const { address } = req.body;
+    const { address, name, phone } = req.body;
 
-    if (!address) {
-      return res.status(400).json({ message: "Address is required" });
+    if (!address || !name || !phone) {
+      return res
+        .status(400)
+        .json({ message: "Address, name, and phone are required" });
     }
-
-    console.log(address);
 
     const geoResponse = await googleMapsClient.geocode({
       params: {
@@ -30,7 +30,6 @@ export const addOrder = async (req, res) => {
     }
 
     const location = geoResponse.data.results[0].geometry.location;
-    // Google returns { lat, lng }, convert to GeoJSON Point
     const geometry = {
       type: "Point",
       coordinates: [location.lng, location.lat],
@@ -39,6 +38,8 @@ export const addOrder = async (req, res) => {
     const newOrder = new Order({
       geometry,
       address,
+      name,
+      phone,
     });
 
     await newOrder.save();
@@ -64,6 +65,8 @@ export const getOrder = async (req, res) => {
 
 export const addStockData = async (req, res) => {
   try {
+    await Order.deleteMany({});
+
     await Order.insertMany(stock);
     res.status(200).json({ message: "Stock data added successfully" });
   } catch (error) {

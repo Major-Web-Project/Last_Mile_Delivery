@@ -14,14 +14,24 @@ import { useEffect, useState } from "react";
 import useOrderStore from "../store/addressStore";
 import { Typewriter } from "react-simple-typewriter";
 import { useToast } from "@/hooks/use-toast";
+import ClusterViewer from "@/components/ClusterViewer";
 import axios from "axios";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [newAddress, setNewAddress] = useState("");
+
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [streetNumber, setStreetNumber] = useState("");
+  const [streetName, setStreetName] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [country, setCountry] = useState("");
   const { orders, getOrders, addOrders } = useOrderStore();
   const { toast } = useToast();
   const [clusters, setClusters] = useState([]);
+  const [processedClusters, setProcessedClusters] = useState([]);
 
   useEffect(() => {
     const fetchClusters = async () => {
@@ -31,7 +41,7 @@ const Index = () => {
         ); // adjust BASE_URL if needed
         const data = res.data;
         setClusters(data);
-        console.log("Frontend:", data);
+        console.log("Frontend clusters:", data);
       } catch (err) {
         console.error("Failed to fetch clusters", err);
       }
@@ -40,33 +50,97 @@ const Index = () => {
     fetchClusters();
   }, []);
 
+  // Process clusters to replace coordinates with addresses from orders
+  useEffect(() => {
+    if (!clusters.length || !orders.length) return;
+
+    // Build a map of "lat,lng" → address
+    const coordToAddress = {};
+    orders.forEach((order) => {
+      if (
+        order.geometry?.type === "Point" &&
+        Array.isArray(order.geometry.coordinates)
+      ) {
+        const key = order.geometry.coordinates
+          .map((c) => Number(c).toFixed(6))
+          .join(",");
+        coordToAddress[key] = order.address;
+      }
+    });
+
+    // Replace each coordinate in clusters with matching address
+    const newClusters = clusters.map((cluster) =>
+      cluster.map((coord) => {
+        const key = coord.map((c) => Number(c).toFixed(6)).join(",");
+        return coordToAddress[key] || `(${coord.join(", ")})`; // fallback if no match
+      })
+    );
+
+    setProcessedClusters(newClusters);
+  }, [clusters, orders]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted with address:", newAddress);
 
-    if (!newAddress.trim()) {
+    // Basic validation
+    if (
+      !fullName ||
+      !phone ||
+      !streetNumber ||
+      !streetName ||
+      !city ||
+      !state ||
+      !postalCode ||
+      !country
+    ) {
       toast({
         title: "Error",
-        description: "Please enter a valid address",
+        description: "Please fill in all address fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!/^\+?[0-9]{7,15}$/.test(phone)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid phone number",
         variant: "destructive",
       });
       return;
     }
 
+    // Construct full address
+    const fullAddress =
+      `${streetNumber} ${streetName}, ${city}, ${state}, ${postalCode}, ${country}`.trim();
+    const newOrder = {
+      address: fullAddress,
+      name: fullName,
+      phone,
+    };
+
     try {
       console.log("Calling addOrders...");
-      const result = await addOrders(newAddress);
+      const result = await addOrders(newOrder);
       console.log("addOrders result:", result);
 
-      // The addOrders function now automatically refreshes orders and notifies callbacks
       toast({
         title: "Success!",
         description: `Address added successfully! Geocoded as: ${
           result.geocodedAddress || "Location identified"
         }`,
       });
-      console.log("Submitted Address:", newAddress);
-      setNewAddress("");
+
+      console.log("Submitted Address:", fullAddress);
+
+      // Reset form fields
+      setFullName("");
+      setPhone("");
+      setStreetNumber("");
+      setStreetName("");
+      setCity("");
+      setState("");
+      setPostalCode("");
+      setCountry("");
     } catch (error) {
       console.error("Error in handleSubmit:", error);
       toast({
@@ -109,31 +183,10 @@ const Index = () => {
                 />
               </h1>
             </div>
-            <h2 className="text-sm font-bold text-black w-fit mx-auto mb-10">
+            <h2 className="text-sm font-bold text-black w-fit mx-auto">
               Advanced last-mile delivery management with AI-powered routing and
               intelligent optimization for seamless logistics operations
             </h2>
-            <form
-              onSubmit={handleSubmit}
-              method="post"
-              className="flex flex-col sm:flex-row justify-center gap-4"
-            >
-              <input
-                onChange={(e) => setNewAddress(e.target.value)}
-                value={newAddress}
-                type="text"
-                name="newAdd"
-                id="newAdd"
-                placeholder="Enter Full Address (e.g., Parul University, Vadodara, Gujarat, India)"
-                className="px-4 py-2 w-full sm:w-[400px] text-black border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="submit"
-                className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800"
-              >
-                Add New Address
-              </button>
-            </form>
           </div>
           <div className="max-w-7xl mx-auto px-4">
             {/* Main Feature Cards */}
@@ -186,6 +239,120 @@ const Index = () => {
                 </CardContent>
               </Card>
             </div>
+            <div className="max-w-5xl mx-auto flex flex-col lg:flex-row items-center gap-12 mb-10">
+              <div className="w-full lg:w-1/2 bg-white/50 p-6 rounded-lg shadow-md ml-8 max-h-[500px] overflow-y-auto mr-8">
+                <ClusterViewer clusters={processedClusters} />
+              </div>
+
+              <div className="w-full lg:w-1/2">
+                <form
+                  onSubmit={handleSubmit}
+                  method="post"
+                  className="flex flex-col gap-4 w-full max-w-md mx-auto max-h-[500px] bg-white/20 shadow-md p-4 sm:p-6 rounded-lg"
+                >
+                  <h1 className="text-3xl font-bold text-center mb-4">
+                    Add Your Address
+                  </h1>
+
+                  {/* Name */}
+                  <input
+                    type="text"
+                    name="fullName"
+                    id="fullName"
+                    placeholder="Full Name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+                  {/* Phone Number */}
+                  <input
+                    type="tel"
+                    name="phone"
+                    id="phone"
+                    placeholder="Phone Number"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+                  {/* Street Number + Street Name */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="streetNumber"
+                      id="streetNumber"
+                      placeholder="Street No."
+                      value={streetNumber}
+                      onChange={(e) => setStreetNumber(e.target.value)}
+                      className="px-4 py-2 w-1/3 text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
+                      name="streetName"
+                      id="streetName"
+                      placeholder="Street Name"
+                      value={streetName}
+                      onChange={(e) => setStreetName(e.target.value)}
+                      className="px-4 py-2 flex-1 text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* City + Pincode */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="city"
+                      id="city"
+                      placeholder="City"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="px-4 py-2 flex-1 text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
+                      name="postalCode"
+                      id="postalCode"
+                      placeholder="Pincode"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                      className="px-4 py-2 w-1/3 text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* State */}
+                  <input
+                    type="text"
+                    name="state"
+                    id="state"
+                    placeholder="State / Province"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+                  {/* Country */}
+                  <input
+                    type="text"
+                    name="country"
+                    id="country"
+                    placeholder="Country"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="px-4 py-2 w-full text-black border rounded-md bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 transition"
+                  >
+                    Add New Address
+                  </button>
+                </form>
+              </div>
+            </div>
+
             <div className="grid lg:grid-cols-3 gap-4 mb-10 ">
               {/* Feature Grid */}
               <div className="text-center p-6 bg-purple-50 rounded-lg shadow-sm hover:shadow-lg transition-shadow border border-border">
@@ -228,7 +395,7 @@ const Index = () => {
 
             {/* Stats Section */}
             <div className="rounded-2xl shadow-lg p-8 border border-border bg-transparent">
-              <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div className="grid md:grid-cols-3 gap-8 text-center ">
                 <div className="bg-blue-50 p-6 rounded-xl">
                   <div className="text-4xl font-bold text-blue-600 mb-2">
                     AI-Powered

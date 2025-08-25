@@ -9,8 +9,6 @@
 #map-container {
   height: 100%;
   width: 100%;
-  /* temporarily set the background color so we can tell where the map container is positioned */
-  background-color: lightgrey;
 }
 
 .sidebar {
@@ -37,23 +35,22 @@
 }
 
 #instructions {
-  position: absolute;
-  margin: 20px;
-  
-  width: 15%;
-  top: 25%;
-  bottom: 20%;
-  padding: 20px;
-  color: black;
+  z-index: 1;
   background-color: #fff;
-  overflow-y: scroll;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 20px;
+  color: #222;
   font-family: sans-serif;
+  max-width: 400px;
+  margin-top:100px;
+  transition: opacity 0.3s;
 }
 
 .direction-marker {
   width: 40px;
   height: 40px;
-  background-image: url("../assets/arrow_16257597.png"); /* Replace with arrow/car icon */
+  background-image: url("../assets/arrow_16257597.png");
   background-size: cover;
   background-repeat: no-repeat;
 }

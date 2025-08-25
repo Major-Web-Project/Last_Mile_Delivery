@@ -3,18 +3,26 @@ import mongoose from "mongoose";
 const orderSchema = new mongoose.Schema({
   geometry: {
     type: {
-      type: String, // Don't do `{ location: { type: String } }`
-      enum: ["Point"], // 'location.type' must be 'Point'
+      type: String,
+      enum: ["Point"], // only allow GeoJSON Point
       required: true,
     },
     coordinates: {
-      type: [Number],
+      type: [Number], // [longitude, latitude]
       required: true,
     },
   },
   address: {
-    type: String, // Store text address
-    required: false, // or true if mandatory
+    type: String,
+    required: true, // making it mandatory based on your data
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  phone: {
+    type: String, // keep as string to preserve leading zeros
+    required: true,
   },
 });
 

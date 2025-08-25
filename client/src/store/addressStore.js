@@ -38,9 +38,9 @@ const orderStore = create((set, get) => ({
     }
   },
 
-  addOrders: async (address) => {
+  addOrders: async (order) => {
     try {
-      const response = await axiosInstance.post("/order", { address });
+      const response = await axiosInstance.post("/order", order);
       console.log("Address added successfully");
 
       // Refresh orders after adding new one

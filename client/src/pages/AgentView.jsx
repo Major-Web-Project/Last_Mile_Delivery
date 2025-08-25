@@ -97,10 +97,10 @@ const AgentView = () => {
         setCurrentDelivery({
           id: pendingOrders[0]._id,
           address: pendingOrders[0].address,
-          customer: "N/A",
+          customer: pendingOrders[0].name || "N/A",
           status: "pending",
           eta: "",
-          phone: "",
+          phone: pendingOrders[0].phone || "N/A",
           coordinates:
             pendingOrders[0].geometry && pendingOrders[0].geometry.coordinates
               ? pendingOrders[0].geometry.coordinates
@@ -110,7 +110,7 @@ const AgentView = () => {
           pendingOrders.slice(1).map((order) => ({
             id: order._id,
             address: order.address,
-            customer: "N/A",
+            customer: order.name || "N/A",
             status: "pending",
             eta: "",
             coordinates:
@@ -159,10 +159,10 @@ const AgentView = () => {
     >
       <div className="min-h-screen bg-yellow-100/50 backdrop-blur-sm text-foreground">
         {/* Header */}
-        <div className=" border-b border-border shadow-sm ">
+        <div className=" border-b border-border shadow-sm bg-black/30">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 text-white">
                 <Button variant="ghost" onClick={() => navigate("/")}>
                   ← Home
                 </Button>
@@ -224,10 +224,6 @@ const AgentView = () => {
                             ? "Completed"
                             : "In Transit"}
                         </Badge>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Clock className="w-4 h-4 mr-1" />
-                          ETA: {currentDelivery.eta}
-                        </div>
                       </div>
                       <div className="space-y-2">
                         {currentDelivery.status !== "completed" ? (
@@ -275,9 +271,6 @@ const AgentView = () => {
                         <div className="font-medium">{delivery.customer}</div>
                         <div className="text-sm text-muted-foreground">
                           {delivery.address}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          ETA: {delivery.eta}
                         </div>
                       </div>
                     ))}
