@@ -9,7 +9,7 @@ import mongoose from "mongoose";
 dotenv.config();
 
 const app = express();
-const allowedOrigins = ["http://localhost:8081", "http://localhost:8080"];
+const allowedOrigins = ["http://localhost:8080", "http://localhost:8000"];
 
 app.use(
   cors({
@@ -21,6 +21,8 @@ app.use(
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
+
+console.log(PORT);
 
 async function main() {
   await mongoose.connect("mongodb://127.0.0.1:27017/clusterOrders");

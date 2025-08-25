@@ -15,6 +15,7 @@ import useOrderStore from "../store/addressStore";
 import { Typewriter } from "react-simple-typewriter";
 import { useToast } from "@/hooks/use-toast";
 import ClusterViewer from "@/components/ClusterViewer";
+import axios from "axios";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -26,74 +27,133 @@ const Index = () => {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [postalCode, setPostalCode] = useState("");
-  const [country, setCountry] = useState("");  const { orders, getOrders, addOrders } = useOrderStore();
+  const [country, setCountry] = useState("");
+  const { orders, getOrders, addOrders } = useOrderStore();
   const { toast } = useToast();
+  const [clusters, setClusters] = useState([]);
+  const [processedClusters, setProcessedClusters] = useState([]);
+
+  useEffect(() => {
+    const fetchClusters = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/clusters/predict-from-orders"
+        ); // adjust BASE_URL if needed
+        const data = res.data;
+        setClusters(data);
+        console.log("Frontend clusters:", data);
+      } catch (err) {
+        console.error("Failed to fetch clusters", err);
+      }
+    };
+
+    fetchClusters();
+  }, []);
+
+  // Process clusters to replace coordinates with addresses from orders
+  useEffect(() => {
+    if (!clusters.length || !orders.length) return;
+
+    // Build a map of "lat,lng" → address
+    const coordToAddress = {};
+    orders.forEach((order) => {
+      if (
+        order.geometry?.type === "Point" &&
+        Array.isArray(order.geometry.coordinates)
+      ) {
+        const key = order.geometry.coordinates
+          .map((c) => Number(c).toFixed(6))
+          .join(",");
+        coordToAddress[key] = order.address;
+      }
+    });
+
+    // Replace each coordinate in clusters with matching address
+    const newClusters = clusters.map((cluster) =>
+      cluster.map((coord) => {
+        const key = coord.map((c) => Number(c).toFixed(6)).join(",");
+        return coordToAddress[key] || `(${coord.join(", ")})`; // fallback if no match
+      })
+    );
+
+    setProcessedClusters(newClusters);
+  }, [clusters, orders]);
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  // Basic validation
-  if (!fullName || !phone || !streetNumber || !streetName || !city || !state || !postalCode || !country) {
-    toast({
-      title: "Error",
-      description: "Please fill in all address fields",
-      variant: "destructive",
-    });
-    return;
-  }
-  if (!/^\+?[0-9]{7,15}$/.test(phone)) {
-    toast({
-      title: "Error",
-      description: "Please enter a valid phone number",
-      variant: "destructive",
-    });
-    return;
-  }
+    e.preventDefault();
 
-  // Construct full address
-  const fullAddress = `${streetNumber} ${streetName}, ${city}, ${state}, ${postalCode}, ${country}`.trim();
-  const newOrder = {
-    customer : fullName,
-    phone,
-    address: fullAddress,
+    // Basic validation
+    if (
+      !fullName ||
+      !phone ||
+      !streetNumber ||
+      !streetName ||
+      !city ||
+      !state ||
+      !postalCode ||
+      !country
+    ) {
+      toast({
+        title: "Error",
+        description: "Please fill in all address fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!/^\+?[0-9]{7,15}$/.test(phone)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Construct full address
+    const fullAddress =
+      `${streetNumber} ${streetName}, ${city}, ${state}, ${postalCode}, ${country}`.trim();
+    const newOrder = {
+      customer: fullName,
+      phone,
+      address: fullAddress,
+    };
+
+    try {
+      console.log("Calling addOrders...");
+      const result = await addOrders(newOrder);
+      console.log("addOrders result:", result);
+
+      toast({
+        title: "Success!",
+        description: `Address added successfully! Geocoded as: ${
+          result.geocodedAddress || "Location identified"
+        }`,
+      });
+
+      console.log("Submitted Address:", fullAddress);
+
+      // Reset form fields
+      setFullName("");
+      setPhone("");
+      setStreetNumber("");
+      setStreetName("");
+      setCity("");
+      setState("");
+      setPostalCode("");
+      setCountry("");
+    } catch (error) {
+      console.error("Error in handleSubmit:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add address. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  try {
-    console.log("Calling addOrders...");
-    const result = await addOrders(newOrder);
-    console.log("addOrders result:", result);
-
-    toast({
-      title: "Success!",
-      description: `Address added successfully! Geocoded as: ${
-        result.geocodedAddress || "Location identified"
-      }`,
-    });
-
-    console.log("Submitted Address:", fullAddress);
-
-    // Reset form fields
-    setFullName("");
-    setPhone("");
-    setStreetNumber("");
-    setStreetName("");
-    setCity("");
-    setState("");
-    setPostalCode("");
-    setCountry("");
-  } catch (error) {
-    console.error("Error in handleSubmit:", error);
-    toast({
-      title: "Error",
-      description: "Failed to add address. Please try again.",
-      variant: "destructive",
-    });
-  }
-};
   useEffect(() => {
     getOrders();
   }, [getOrders]);
-
 
   return (
     <div
@@ -178,11 +238,10 @@ const Index = () => {
                   </Button>
                 </CardContent>
               </Card>
-              
             </div>
             <div className="max-w-5xl mx-auto flex flex-col lg:flex-row items-center gap-12 mb-10">
               <div className="w-full lg:w-1/2 bg-white/50 p-6 rounded-lg shadow-md ml-8 max-h-[500px] overflow-y-auto mr-8">
-                <ClusterViewer />
+                <ClusterViewer clusters={processedClusters} />
               </div>
 
               <div className="w-full lg:w-1/2">
@@ -191,7 +250,9 @@ const Index = () => {
                   method="post"
                   className="flex flex-col gap-4 w-full max-w-md mx-auto max-h-[500px] bg-white/20 shadow-md p-4 sm:p-6 rounded-lg"
                 >
-                  <h1 className="text-3xl font-bold text-center mb-4">Add Your Address</h1>
+                  <h1 className="text-3xl font-bold text-center mb-4">
+                    Add Your Address
+                  </h1>
 
                   {/* Name */}
                   <input
@@ -290,8 +351,6 @@ const Index = () => {
                   </button>
                 </form>
               </div>
-
-
             </div>
 
             <div className="grid lg:grid-cols-3 gap-4 mb-10 ">

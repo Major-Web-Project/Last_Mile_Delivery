@@ -65,6 +65,7 @@ export const predictClustersFromOrders = async (req, res) => {
       cluster.coordinates.map((point) => [point.lon, point.lat])
     );
 
+    console.log(clusters);
     res.json(clusters);
   } catch (error) {
     res

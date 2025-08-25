@@ -1,55 +1,20 @@
 import React, { useState } from "react";
 
-const clusters = [
-  {
-    id: 1,
-    name: "Cluster 1",
-    addresses: [
-      "12 MG Road, Bengaluru, KA",
-      "88 Whitefield, Bengaluru, KA",
-      "56 Koramangala, Bengaluru, KA",
-      "200 Indiranagar, Bengaluru, KA",
-      "12 MG Road, Bengaluru, KA",
-      "88 Whitefield, Bengaluru, KA",
-      "56 Koramangala, Bengaluru, KA",
-      "200 Indiranagar, Bengaluru, KA",
-      "12 MG Road, Bengaluru, KA",
-      "88 Whitefield, Bengaluru, KA",
-      "56 Koramangala, Bengaluru, KA",
-      "200 Indiranagar, Bengaluru, KA",
-    ],
-  },
-  {
-    id: 2,
-    name: "Cluster 2",
-    addresses: [
-      "123 Main Street, New York, NY",
-      "45 Park Avenue, New York, NY",
-      "78 Broadway, New York, NY",
-      "222 Wall Street, New York, NY",
-      "15 Hudson Yards, New York, NY",
-    ],
-  },
-  {
-    id: 3,
-    name: "Cluster 3",
-    addresses: [
-      "10 Marine Drive, Mumbai, MH",
-      "250 Bandra West, Mumbai, MH",
-      "400 Andheri East, Mumbai, MH",
-    ],
-  },
-];
-
-const ClusterViewer = () => {
+const ClusterViewer = ({ clusters }) => {
   const [currentIdx, setCurrentIdx] = useState(0);
+
+  if (!clusters || !clusters.length) {
+    return <p className="text-gray-500">No clusters available</p>;
+  }
 
   const handlePrevious = () => {
     if (currentIdx > 0) setCurrentIdx((prev) => prev - 1);
   };
 
   const handleNext = () => {
-    if (currentIdx < clusters.length - 1) setCurrentIdx((prev) => prev + 1);
+    if (currentIdx < clusters.length - 1) {
+      setCurrentIdx((prev) => prev + 1);
+    }
   };
 
   const currentCluster = clusters[currentIdx];
@@ -65,7 +30,7 @@ const ClusterViewer = () => {
           <div /> // empty div keeps spacing
         )}
 
-        <div>{currentCluster.name}</div>
+        <div>{`Cluster ${currentIdx + 1} / ${clusters.length}`}</div>
 
         {/* Show Next only if not last cluster */}
         {currentIdx < clusters.length - 1 ? (
@@ -77,14 +42,18 @@ const ClusterViewer = () => {
 
       {/* Cluster Addresses */}
       <ul className="space-y-2">
-        {currentCluster.addresses.map((address, idx) => (
-          <li
-            key={idx}
-            className="bg-gray-100 p-3 rounded-md shadow-sm hover:bg-gray-200"
-          >
-            {address}
-          </li>
-        ))}
+        {Array.isArray(currentCluster) && currentCluster.length > 0 ? (
+          currentCluster.map((address, idx) => (
+            <li
+              key={idx}
+              className="bg-gray-100 p-3 rounded-md shadow-sm hover:bg-gray-200"
+            >
+              {address}
+            </li>
+          ))
+        ) : (
+          <li className="text-gray-500">No addresses in this cluster.</li>
+        )}
       </ul>
     </div>
   );

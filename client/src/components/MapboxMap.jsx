@@ -188,7 +188,11 @@ function MapboxMap({ clusters, idx }) {
 
   return (
     <>
-     <div id="map-container" ref={mapContainerRef} className="relative h-screen w-full">
+      <div
+        id="map-container"
+        ref={mapContainerRef}
+        className="relative h-screen w-full"
+      >
         {/* Instructions overlay */}
         <Instructions steps={steps} duration={duration} />
         {/* <div
