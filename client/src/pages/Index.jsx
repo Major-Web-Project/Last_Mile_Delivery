@@ -33,22 +33,24 @@ const Index = () => {
   const [clusters, setClusters] = useState([]);
   const [processedClusters, setProcessedClusters] = useState([]);
 
-  useEffect(() => {
-    const fetchClusters = async () => {
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/clusters/predict-from-orders`
-        ); // adjust BASE_URL if needed
-        const data = res.data;
-        setClusters(data);
-        console.log("Frontend clusters:", data);
-      } catch (err) {
-        console.error("Failed to fetch clusters", err);
-      }
-    };
+  // Fetch clusters function
+  const fetchClusters = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/clusters/predict-from-orders`
+      ); // adjust BASE_URL if needed
+      const data = res.data;
+      setClusters(data);
+      console.log("Frontend clusters:", data);
+    } catch (err) {
+      console.error("Failed to fetch clusters", err);
+    }
+  };
 
+  // Fetch clusters whenever orders change
+  useEffect(() => {
     fetchClusters();
-  }, []);
+  }, [orders]);
 
   // Process clusters to replace coordinates with addresses from orders
   useEffect(() => {
