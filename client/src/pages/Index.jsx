@@ -37,7 +37,7 @@ const Index = () => {
     const fetchClusters = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/clusters/predict-from-orders"
+          `${import.meta.env.VITE_BACKEND_URL}/clusters/predict-from-orders`
         ); // adjust BASE_URL if needed
         const data = res.data;
         setClusters(data);

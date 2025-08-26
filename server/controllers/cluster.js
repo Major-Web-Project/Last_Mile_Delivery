@@ -2,8 +2,7 @@
 import axios from "axios";
 import Order from "../models/order.js";
 
-const FASTAPI_BASE_URL =
-  process.env.FASTAPI_BASE_URL || "http://localhost:8000";
+const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL;
 
 // Client-provided coordinates -> predict with size cap
 export const predictClusters = async (req, res) => {

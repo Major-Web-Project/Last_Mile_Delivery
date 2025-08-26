@@ -85,7 +85,7 @@ function MapboxMap({ clusters, idx, completedCoords = [], onOptimalOrder }) {
       console.log("Requesting matrix for coordinates:", coordStr);
 
       const matrixRes = await fetch(
-        `http://localhost:5000/api/matrix?coords=${coordStr}`
+        `${import.meta.env.VITE_BACKEND_URL}/matrix?coords=${coordStr}`
       );
 
       const matrixData = await matrixRes.json();

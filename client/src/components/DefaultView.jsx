@@ -21,7 +21,7 @@ function DefaultView() {
     const fetchClusters = async () => {
       try {
         const res = await fetch(
-          "http://localhost:5000/api/clusters/predict-from-orders"
+          `${import.meta.env.VITE_BACKEND_URL}/clusters/predict-from-orders`
         );
         const data = await res.json();
         setClusters(data);
