@@ -36,6 +36,9 @@ app.use("/api", orderRoutes);
 app.use("/api", matrixRoutes);
 app.use("/api", clusterRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Proxy running at http://localhost:${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Proxy running at http://localhost:${PORT}`);
+// });
+
+//for deployment
+export default app;
